@@ -34,10 +34,13 @@ class BaseRepository:
         return result.scalars().all()
 
     async def get_one_or_none(self, **filter_by):
-        query = select(self.model).filter_by(**filter_by)
+        query = (
+            select(self.model)
+            .filter_by(**filter_by)
+        )
         result = await self.session.execute(query)
 
-        return result.scalars().one_or_none()
+        return result.scalars().one()
 
     async def add(self, add_data: BaseModel):
         add_stmt = (
@@ -49,13 +52,13 @@ class BaseRepository:
         result = await self.session.execute(add_stmt)
         return result.scalar_one()
 
-    async def edit(self, update_data: BaseModel, **filters_by) -> None:
+    async def edit(self, update_data: BaseModel, is_patch: bool = False, **filters_by) -> None:
         await self._validate_single_object(**filters_by)
 
         edit_stmt = (
             update(self.model)
             .filter_by(**filters_by)
-            .values(**update_data.model_dump(exclude_unset=True))
+            .values(**update_data.model_dump(exclude_unset=is_patch))
         )
 
         await self.session.execute(edit_stmt)
