@@ -5,6 +5,7 @@ from sqlalchemy import delete, func, insert, select, update
 
 class BaseRepository:
     model = None
+    schema: BaseModel = None
 
     def __init__(self, session):
         self.session = session
@@ -31,7 +32,7 @@ class BaseRepository:
         query = select(self.model)
         result = await self.session.execute(query)
 
-        return result.scalars().all()
+        return [self.schema.model_validate(obj, from_attributes=True) for obj in result.scalars().all()]
 
     async def get_one_or_none(self, **filter_by):
         query = (
@@ -39,8 +40,11 @@ class BaseRepository:
             .filter_by(**filter_by)
         )
         result = await self.session.execute(query)
-
-        return result.scalars().one()
+        obj = result.scalars().one_or_none()
+        if obj is None:
+            return None
+        
+        return self.schema.model_validate(obj, from_attributes=True)
 
     async def add(self, add_data: BaseModel):
         add_stmt = (
