@@ -8,6 +8,7 @@ from alembic import context
 from src.database import Base
 from src.models.hotels import HotelsOrm
 from src.models.rooms import RoomsOrm
+from src.models.users import UsersOrm
 from src.config import settings
 
 # this is the Alembic Config object, which provides
