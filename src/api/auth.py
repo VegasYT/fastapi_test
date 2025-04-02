@@ -16,6 +16,13 @@ async def register_user(
     data: UserRequestAdd
 ):
     async with async_session_maker() as session:
+        existing_user = await UsersRepository(session).get_one_or_none(email=data.email)
+        if existing_user:
+            raise HTTPException(
+                status_code=400,
+                detail="Пользователь с таким email уже существует"
+            )
+
         hashed_password = pwd_context.hash(data.password)
         new_user_data = UserAdd(
             email=data.email, 
