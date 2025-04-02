@@ -1,7 +1,7 @@
 from fastapi import Query, Body, APIRouter, Body, HTTPException
 from sqlalchemy import insert, select, func
 
-from repos.hotels import HotelsRepository
+from src.repos.hotels import HotelsRepository
 from src.schemas.hotels import Hotel, HotelAdd, HotelPATCH
 from src.api.dependencies import PaginationDep
 from src.database import async_session_maker, engine
