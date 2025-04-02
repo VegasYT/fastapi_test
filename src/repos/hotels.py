@@ -6,7 +6,7 @@ from repos.base import BaseRepository
 
 class HotelsRepository(BaseRepository):
     model = HotelsOrm
-    shema = Hotel
+    schema = Hotel
 
     async def get_all(
             self, 

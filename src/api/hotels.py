@@ -1,4 +1,4 @@
-from fastapi import Query, Body, APIRouter, Body
+from fastapi import Query, Body, APIRouter, Body, HTTPException
 from sqlalchemy import insert, select, func
 
 from repos.hotels import HotelsRepository
@@ -14,9 +14,10 @@ router = APIRouter(prefix="/hotels", tags=["Отели"])
 @router.get("/{hotel_id}")
 async def get_hotel(hotel_id: int):
     async with async_session_maker() as session:
-        return await HotelsRepository(session).get_one_or_none(
-            id=hotel_id
-        )
+        hotel = await HotelsRepository(session).get_one_or_none(id=hotel_id)
+        if hotel is None:
+            raise HTTPException(status_code=404, detail="Отель не найден")
+        return hotel
 
 
 @router.get("")

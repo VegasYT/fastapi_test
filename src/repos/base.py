@@ -40,6 +40,7 @@ class BaseRepository:
             .filter_by(**filter_by)
         )
         result = await self.session.execute(query)
+
         obj = result.scalars().one_or_none()
         if obj is None:
             return None
