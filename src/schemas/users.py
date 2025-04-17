@@ -1,6 +1,11 @@
 from pydantic import BaseModel, EmailStr
 
 
+class UserRequestLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+
 class UserRequestAdd(BaseModel):
     email: EmailStr
     password: str
@@ -20,3 +25,7 @@ class User(BaseModel):
     email: EmailStr
     first_name: str
     last_name: str
+
+
+class UserWitchHashedPassword(User):
+    hashed_password: str
