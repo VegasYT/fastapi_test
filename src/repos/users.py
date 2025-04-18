@@ -17,5 +17,8 @@ class UsersRepository(BaseRepository):
         )
         result = await self.session.execute(query)
 
-        obj = result.scalars().one()
+        obj = result.scalars().one_or_none()
+        if not obj:
+            return None
+    
         return UserWitchHashedPassword.model_validate(obj, from_attributes=True)

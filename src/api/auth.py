@@ -3,22 +3,17 @@ from fastapi import APIRouter, HTTPException, Response
 from src.repos.users import UsersRepository
 from src.schemas.users import UserAdd, UserRequestAdd, UserRequestLogin
 from src.database import async_session_maker
+from src.services.auth import AuthService
 
 
 router = APIRouter(prefix="/auth", tags=["Авторизация и аутентификация"])
-
-
-
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
-
 
 
 @router.post("/register")
 async def register_user(
     data: UserRequestAdd
 ):
-    hashed_password = pwd_context.hash(data.password)
+    hashed_password = AuthService().pwd_context.hash(data.password)
     new_user_data = UserAdd(
         email=data.email, 
         hashed_password=hashed_password, 
@@ -51,10 +46,10 @@ async def login_user(
         if not user:
             raise HTTPException(status_code=401, detail="Неверный логин или пароль")
         
-        if not verify_password(data.password, user.hashed_password):
+        if not AuthService().verify_password(data.password, user.hashed_password):
             raise HTTPException(status_code=401, detail="Неверный логин или пароль")
         
-        access_token = create_access_token({"user_id": user.id})
+        access_token = AuthService().create_access_token({"user_id": user.id})
         response.set_cookie("access_token", access_token)
 
         return {"access_token": access_token}
