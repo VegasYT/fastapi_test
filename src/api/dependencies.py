@@ -11,8 +11,6 @@ class PaginationParams(BaseModel):
     page_number: Annotated[int | None, Query(1, ge=1, description="Номер страницы")]
 
 
-PaginationDep = Annotated[PaginationParams, Depends()]
-
 def get_token(request: Request) -> str:
     token = request.cookies.get("access_token")
     if not token:
@@ -20,9 +18,10 @@ def get_token(request: Request) -> str:
     return token
     
 
-def get_current_user_id(token: str = Depends(get_token)):
+def get_current_user_id(token: str = Depends(get_token)) -> int:
     data = AuthService().decode_token(token)
-    user_id = data["user_id"]
-    
+    return data["user_id"]
 
+    
 UserIdDep = Annotated[int, Depends(get_current_user_id)]
+PaginationDep = Annotated[PaginationParams, Depends()]

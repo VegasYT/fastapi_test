@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
 import jwt
@@ -22,5 +23,7 @@ class AuthService:
             return self.pwd_context.verify(plain_password, hashed_password)
         
         def decode_token(self, token: str) -> dict:
-            return jwt.decode(jwt=token, algorithms=["HS256"], key=settings.JWT_SECRET_KEY)
-             
+            try:
+                return jwt.decode(jwt=token, algorithms=["HS256"], key=settings.JWT_SECRET_KEY)
+            except jwt.exceptions.DecodeError:
+                raise HTTPException(status_code=401, detail="Неверный токен")
