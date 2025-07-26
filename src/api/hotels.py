@@ -11,15 +11,6 @@ from src.models.hotels import HotelsOrm
 router = APIRouter(prefix="/hotels", tags=["Отели"])
  
 
-@router.get("/{hotel_id}")
-async def get_hotel(hotel_id: int):
-    async with async_session_maker() as session:
-        hotel = await HotelsRepository(session).get_one_or_none(id=hotel_id)
-        if hotel is None:
-            raise HTTPException(status_code=404, detail="Отель не найден")
-        return hotel
-
-
 @router.get("")
 async def get_hotels(
         pagination: PaginationDep,
@@ -62,6 +53,15 @@ async def create_hotel(hotel_data: HotelAdd = Body(openapi_examples={
         await session.commit()
 
     return {"status": "OK", "data": hotel}
+
+
+@router.get("/{hotel_id}")
+async def get_hotel(hotel_id: int):
+    async with async_session_maker() as session:
+        hotel = await HotelsRepository(session).get_one_or_none(id=hotel_id)
+        if hotel is None:
+            raise HTTPException(status_code=404, detail="Отель не найден")
+        return hotel
 
 
 @router.put("/{hotel_id}")

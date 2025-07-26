@@ -45,6 +45,7 @@ class BaseRepository:
         if obj is None:
             return None
         
+        # print(f"\n\n\n{obj}")
         return self.schema.model_validate(obj, from_attributes=True)
 
     async def add(self, add_data: BaseModel):

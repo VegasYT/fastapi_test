@@ -1,6 +1,8 @@
-from src.database import Base
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import relationship
 from sqlalchemy import String
+
+from src.database import Base
 
 
 class HotelsOrm(Base):
