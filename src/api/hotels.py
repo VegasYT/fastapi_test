@@ -3,7 +3,7 @@ from sqlalchemy import insert, select, func
 
 from src.repos.hotels import HotelsRepository
 from src.schemas.hotels import Hotel, HotelAdd, HotelPATCH
-from src.api.dependencies import PaginationDep
+from src.api.dependencies import DBDep, PaginationDep
 from src.database import async_session_maker, engine
 from src.models.hotels import HotelsOrm
  
@@ -13,68 +13,71 @@ router = APIRouter(prefix="/hotels", tags=["Отели"])
 
 @router.get("")
 async def get_hotels(
-        pagination: PaginationDep,
-        location: str | None = Query(None, description="Местоположение"),
-        title: str | None = Query(None, description="Название отеля"),
+    db: DBDep,
+    pagination: PaginationDep,
+    location: str | None = Query(None, description="Местоположение"),
+    title: str | None = Query(None, description="Название отеля"),
 ):
     page_size = pagination.page_size or 5
-    limit = page_size
+    # limit = page_size
     offset = page_size * (pagination.page_number - 1)
     
-    async with async_session_maker() as session:
-        return await HotelsRepository(session).get_all(
-            location=location, 
-            title=title, 
-            limit=limit, 
-            offset=offset
-        )
+    return await db.hotels.get_all(
+        location=location, 
+        title=title, 
+        limit=page_size, 
+        offset=offset
+    )
 
 
 @router.post("")
-async def create_hotel(hotel_data: HotelAdd = Body(openapi_examples={
-    "1": {
-        "summary": "Сочи",
-        "value": {
-            "title": "SunResort",
-            "location": "г. Сочи, ул.Ленина, д.12",
+async def create_hotel(
+    db: DBDep,
+    hotel_data: HotelAdd = Body(openapi_examples={
+        "1": {
+            "summary": "Сочи",
+            "value": {
+                "title": "SunResort",
+                "location": "г. Сочи, ул.Ленина, д.12",
+            }
+        },
+        "2": {
+            "summary": "Дубай",
+            "value": {
+                "title": "RelaxHotel",
+                "location": "г. Дубай, ул.Пушкина, д.24",
+            }
         }
-    },
-    "2": {
-        "summary": "Дубай",
-        "value": {
-            "title": "RelaxHotel",
-            "location": "г. Дубай, ул.Пушкина, д.24",
-        }
-    }
-}),
+    }),
 ):
-    async with async_session_maker() as session:
-        hotel = await HotelsRepository(session).add(hotel_data)
-        await session.commit()
+    hotel = await db.hotels.add(hotel_data)
 
     return {"status": "OK", "data": hotel}
 
 
 @router.get("/{hotel_id}")
-async def get_hotel(hotel_id: int):
-    async with async_session_maker() as session:
-        hotel = await HotelsRepository(session).get_one_or_none(id=hotel_id)
-        if hotel is None:
-            raise HTTPException(status_code=404, detail="Отель не найден")
-        return hotel
+async def get_hotel(
+    db: DBDep,
+    hotel_id: int
+):
+    hotel = await db.hotels.get_one_or_none(id=hotel_id)
+    
+    if hotel is None:
+        raise HTTPException(status_code=404, detail="Отель не найден")
+    
+    return hotel
 
 
 @router.put("/{hotel_id}")
 async def edit_hotel(
-        hotel_id: int,
-        update_data: HotelAdd = Body(),
+    db: DBDep,
+    hotel_id: int,
+    update_data: HotelAdd = Body(),
 ):
-    async with async_session_maker() as session:
-        await HotelsRepository(session).edit(
-            update_data, 
-            id=hotel_id
-        )
-        await session.commit()
+    await db.hotels.edit(
+        update_data, 
+        id=hotel_id
+    )
 
     return {"status": "OK"}
 
@@ -85,26 +88,26 @@ async def edit_hotel(
     description="<h1>Тут мы частично обновляем данные об отеле: можно отправить name, а можно title</h1>",
 )
 async def partially_edit_hotel(
-        hotel_id: int,
-        hotel_data: HotelPATCH
+    db: DBDep,
+    hotel_id: int,
+    hotel_data: HotelPATCH
 ):
-    async with async_session_maker() as session:
-        await HotelsRepository(session).edit(
-            hotel_data, 
-            is_patch=True, 
-            id=hotel_id
-        )
-        await session.commit()
+    await db.hotels.edit(
+        hotel_data, 
+        is_patch=True, 
+        id=hotel_id
+    )
 
     return {"status": "OK"}
 
 
 @router.delete("/{hotel_id}")
-async def delete_hotel(hotel_id: int):
-    async with async_session_maker() as session:
-        await HotelsRepository(session).delete(
-            id=hotel_id
-        )
-        await session.commit()
+async def delete_hotel(
+    db: DBDep,
+    hotel_id: int
+):
+    await db.hotels.delete(
+        id=hotel_id
+    )
 
     return {"status": "OK"}

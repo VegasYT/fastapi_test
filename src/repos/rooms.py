@@ -13,6 +13,8 @@ class RoomsRepository(BaseRepository):
 
     async def get_all(
         self, 
+        limit,
+        offset,
         room_title: str | None = None,
         hotel_title: str | None = None,
         hotel_id: int | None = None,
@@ -31,6 +33,12 @@ class RoomsRepository(BaseRepository):
 
         if hotel_id:
             query = query.filter(RoomsOrm.hotel_id == hotel_id)
+
+        query = (
+            query
+            .limit(limit)
+            .offset(offset)
+        )
 
         result = await self.session.execute(query)
         return [Room.model_validate(room, from_attributes=True) for room in result.scalars().all()]
