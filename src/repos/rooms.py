@@ -42,3 +42,14 @@ class RoomsRepository(BaseRepository):
 
         result = await self.session.execute(query)
         return [Room.model_validate(room, from_attributes=True) for room in result.scalars().all()]
+    
+
+    async def get_room_price(
+        self, 
+        room_id
+    ) -> int:
+        query = select(RoomsOrm.price).where(RoomsOrm.id == room_id)
+
+        result = await self.session.execute(query)
+
+        return result.scalar_one()
