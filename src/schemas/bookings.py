@@ -16,3 +16,12 @@ class BookingAddInternal(BookingAddRequest):
 
 class Booking(BookingAddRequest):
     id: int
+
+
+class BookingGetAllResponse(BookingAddRequest):
+    id: int
+    user_id: int
+    room_id: int
+    date_from: date
+    date_to: date
+    price: int
