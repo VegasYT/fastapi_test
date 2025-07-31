@@ -18,7 +18,7 @@ class Booking(BookingAddRequest):
     id: int
 
 
-class BookingGetAllResponse(BookingAddRequest):
+class BookingGetAllResponse(BaseModel):
     id: int
     user_id: int
     room_id: int

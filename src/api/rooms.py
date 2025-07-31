@@ -1,3 +1,4 @@
+from datetime import date
 from fastapi import Query, Body, APIRouter, Body, HTTPException
 
 from src.repos.rooms import RoomsRepository
@@ -12,21 +13,23 @@ router = APIRouter(prefix="/rooms", tags=["Номера"])
 @router.get("")
 async def get_rooms(
     db: DBDep,
-    pagination: PaginationDep,
-    room_title: str | None = Query(None, description="Название номера"),
-    hotel_title: str | None = Query(None, description="Название отеля"),
+    # pagination: PaginationDep,
+    # room_title: str | None = Query(None, description="Название номера"),
     hotel_id: int | None = Query(None, description="ID отеля"),
+    date_from: date | None = Query(None, description="Дата заезда", example="2025-07-02"),
+    date_to: date | None = Query(None, description="Дата выезда", example="2025-07-10"),
 ):
-    page_size = pagination.page_size or 5
-    limit = page_size
-    offset = page_size * (pagination.page_number - 1)
+    # page_size = pagination.page_size or 5
+    # limit = page_size
+    # offset = page_size * (pagination.page_number - 1)
 
-    return await db.rooms.get_all(
-        room_title=room_title,
-        hotel_title=hotel_title,
+    return await db.rooms.get_filtered_by_time(
+        date_from=date_from,
+        date_to=date_to,
+        # room_title=room_title,
         hotel_id=hotel_id,
-        limit=limit, 
-        offset=offset
+        # limit=limit, 
+        # offset=offset
     )
 
 
