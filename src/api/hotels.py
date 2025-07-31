@@ -16,8 +16,8 @@ router = APIRouter(prefix="/hotels", tags=["Отели"])
 async def get_hotels(
     db: DBDep,
     pagination: PaginationDep,
-    # location: str | None = Query(None, description="Местоположение"),
-    # title: str | None = Query(None, description="Название отеля"),
+    location: str | None = Query(None, description="Местоположение"),
+    title: str | None = Query(None, description="Название отеля"),
     date_from: date = Query(example="2025-07-02"),
     date_to: date = Query(example="2025-07-11"),
 ):
@@ -26,10 +26,10 @@ async def get_hotels(
     offset = page_size * (pagination.page_number - 1)
     
     return await db.hotels.get_filtered_by_time(
-        # location=location, 
-        # title=title, 
-        # limit=page_size, 
-        # offset=offset
+        location=location, 
+        title=title, 
+        limit=page_size, 
+        offset=offset,
         date_from=date_from,
         date_to=date_to,
     )
