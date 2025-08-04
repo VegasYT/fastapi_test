@@ -55,25 +55,63 @@ class BaseRepository:
         # print(f"\n\n\n{obj}")
         return self.schema.model_validate(obj, from_attributes=True)
 
+    # async def add(self, add_data: BaseModel):
+    #     add_stmt = (
+    #         insert(self.model)
+    #         .values(**add_data.model_dump())
+    #         .returning(self.model)
+    #     )
+
+    #     result = await self.session.execute(add_stmt)
+    #     return result.scalar_one()
+
     async def add(self, add_data: BaseModel):
+        # Получаем имена колонок модели
+        column_names = {c.name for c in self.model.__table__.columns}
+
+        # Исключаем поля, которых нет в колонках модели
+        add_data_dict = add_data.model_dump(exclude={k for k in add_data.model_dump().keys() if k not in column_names})
+        
         add_stmt = (
             insert(self.model)
-            .values(**add_data.model_dump())
+            .values(**add_data_dict)
             .returning(self.model)
         )
-
         result = await self.session.execute(add_stmt)
-        return result.scalar_one()
+        obj = result.scalar_one()
+        
+        # await self.session.commit()
+        return obj
+    
+    async def add_bulk(self, data: list[BaseModel]):
+        add_data_stmt = insert(self.model).values([item.model_dump() for item in data])
+        
+        await self.session.execute(add_data_stmt)
+
+    # async def edit(self, update_data: BaseModel, is_patch: bool = False, **filters_by) -> None:
+    #     await self._validate_single_object(**filters_by)
+
+    #     edit_stmt = (
+    #         update(self.model)
+    #         .filter_by(**filters_by)
+    #         .values(**update_data.model_dump(exclude_unset=is_patch))
+    #     )
+
+    #     await self.session.execute(edit_stmt)
 
     async def edit(self, update_data: BaseModel, is_patch: bool = False, **filters_by) -> None:
         await self._validate_single_object(**filters_by)
 
+        # Получаем имена колонок модели
+        column_names = {c.name for c in self.model.__table__.columns}
+        # Исключаем поля, которых нет в колонках модели
+        update_data_dict = update_data.model_dump(exclude={k for k in update_data.model_dump().keys() if k not in column_names}, exclude_unset=is_patch)
+        
         edit_stmt = (
             update(self.model)
             .filter_by(**filters_by)
-            .values(**update_data.model_dump(exclude_unset=is_patch))
+            .values(**update_data_dict)
         )
-
         await self.session.execute(edit_stmt)
 
     async def delete(self, **filters_by) -> None:

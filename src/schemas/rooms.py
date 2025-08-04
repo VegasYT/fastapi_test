@@ -7,6 +7,7 @@ class RoomAdd(BaseModel):
     description: str
     price: int
     quantity: int
+    facilities_ids: list[int] | None = None
 
 
 class Room(RoomAdd):
@@ -19,3 +20,4 @@ class RoomPATCH(BaseModel):
     description: str | None = None
     price: int | None = None
     quantity: int | None = None
+    facilities_ids: list[int] | None = None

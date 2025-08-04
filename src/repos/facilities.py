@@ -3,8 +3,8 @@ from sqlalchemy import func, select
 
 from src.models.rooms import RoomsOrm
 from src.repos.utils import rooms_ids_for_booking
-from src.schemas.facilities import Facility
-from src.models.facilities import FacilitiesOrm
+from src.schemas.facilities import Facility, RoomFacility
+from src.models.facilities import FacilitiesOrm, RoomsFacilitiesOrm
 from src.repos.base import BaseRepository
 
 
@@ -28,3 +28,8 @@ class FacilitiesRepository(BaseRepository):
         result = await self.session.execute(query)
 
         return [Facility.model_validate(facility, from_attributes=True) for facility in result.scalars().all()]
+    
+
+class RoomsFacilitiesRepository(BaseRepository):
+    model = RoomsFacilitiesOrm
+    schema = RoomFacility
