@@ -79,32 +79,21 @@ class RoomsRepository(BaseRepository):
             insert_stmt = insert(RoomsFacilitiesOrm).values(insert_data)
             await self.session.execute(insert_stmt)
 
-
     async def edit_with_facilities(self, update_data: BaseModel, is_patch: bool = False, **filters_by):
         """
-        Расширенная версия edit, которая также обрабатывает facilities_ids
+        Обновляет номер и его удобства, используя разные методы для разных частей
         """
-        # Проверяем валидность объекта
-        await self._validate_single_object(**filters_by)
-        
         # Извлекаем facilities_ids из данных обновления
         update_dict = update_data.model_dump(exclude_unset=is_patch)
         facilities_ids = update_dict.pop('facilities_ids', None)
         
-        # Если есть другие поля для обновления - обновляем основную таблицу
+        # Если есть поля для обновления основной таблицы - используем базовый edit
         if update_dict:
-            column_names = {c.name for c in self.model.__table__.columns}
-            filtered_update_dict = {k: v for k, v in update_dict.items() if k in column_names}
-            
-            if filtered_update_dict:
-                edit_stmt = (
-                    update(self.model)
-                    .filter_by(**filters_by)
-                    .values(**filtered_update_dict)
-                )
-                await self.session.execute(edit_stmt)
+            # Создаем новый объект без facilities_ids для базового edit
+            update_data_without_facilities = update_data.__class__.model_validate(update_dict)
+            await self.edit(update_data_without_facilities, is_patch=is_patch, **filters_by)
         
-        # Обновляем facilities если они переданы
+        # Обновляем facilities отдельным методом если они переданы
         if facilities_ids is not None or not is_patch:
             # Получаем room_id из filters_by (предполагаем что передается id=room_id)
             room_id = filters_by.get('id')
