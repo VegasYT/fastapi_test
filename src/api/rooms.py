@@ -16,8 +16,8 @@ async def get_rooms(
     # pagination: PaginationDep,
     # room_title: str | None = Query(None, description="Название номера"),
     hotel_id: int | None = Query(None, description="ID отеля"),
-    date_from: date | None = Query(None, description="Дата заезда", example="2025-07-02"),
-    date_to: date | None = Query(None, description="Дата выезда", example="2025-07-10"),
+    date_from: date | None = Query(None, description="Дата заезда", example="2025-08-08"),
+    date_to: date | None = Query(None, description="Дата выезда", example="2025-08-10"),
 ):
     # page_size = pagination.page_size or 5
     # limit = page_size
