@@ -16,6 +16,7 @@ async def create_bookings(
 ):
     booking = await BookingService(db).create_booking(bookings_data, user_id)
 
+    await db.commit()
     return {"status": "OK", "data": booking}
 
 

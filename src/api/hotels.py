@@ -56,6 +56,7 @@ async def create_hotel(
     }),
 ):
     hotel = await db.hotels.add(hotel_data)
+    await db.commit()
 
     return {"status": "OK", "data": hotel}
 
@@ -84,6 +85,7 @@ async def edit_hotel(
         id=hotel_id
     )
 
+    await db.commit()
     return {"status": "OK"}
 
 
@@ -103,6 +105,7 @@ async def partially_edit_hotel(
         id=hotel_id
     )
 
+    await db.commit()
     return {"status": "OK"}
 
 
@@ -115,4 +118,5 @@ async def delete_hotel(
         id=hotel_id
     )
 
+    await db.commit()
     return {"status": "OK"}

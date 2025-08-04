@@ -60,6 +60,7 @@ async def create_room(
     }),
 ):
     room = await db.rooms.add(room_data)
+    await db.commit()
 
     return {"status": "OK", "data": room}
 
@@ -85,6 +86,7 @@ async def edit_create_room(
         id=room_id
     )
 
+    await db.commit()
     return {"status": "OK"}
 
 
@@ -104,6 +106,9 @@ async def partially_edit_room(
         id=room_id
     )
 
+    await db.commit()
+    return {"status": "OK"}
+
 
 @router.delete("/{room_id}")
 async def delete_room(
@@ -114,4 +119,5 @@ async def delete_room(
         id=room_id
     )
 
+    await db.commit()
     return {"status": "OK"}

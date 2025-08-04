@@ -32,6 +32,7 @@ async def register_user(
     
     user = await db.users.add(new_user_data)
 
+    await db.commit()
     return {"status": "OK"}
 
 
@@ -52,6 +53,7 @@ async def login_user(
     access_token = AuthService().create_access_token({"user_id": user.id})
     response.set_cookie("access_token", access_token)
 
+    await db.commit()
     return {"access_token": access_token}
     
 
@@ -71,4 +73,5 @@ async def logout_user(
 ):
     response.delete_cookie("access_token")
     
+    await db.commit()
     return {"status": "ok"}
