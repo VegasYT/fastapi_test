@@ -76,10 +76,11 @@ async def get_room(
     db: DBDep,
     room_id: int
 ):
-    room = await db.rooms.get_one_or_none(id=room_id)
+    room = await db.rooms.get_one_with_facilities(room_id)
     if room is None:
         raise HTTPException(status_code=404, detail="Номер не найден")
-        
+    return room
+
 
 @router.put("/{room_id}")
 async def edit_room(

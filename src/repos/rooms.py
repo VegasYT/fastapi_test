@@ -1,12 +1,13 @@
 from datetime import date
 from pydantic import BaseModel
 from sqlalchemy import delete, insert, select, update
+from sqlalchemy.orm import joinedload, selectinload
 
 from src.models.facilities import RoomsFacilitiesOrm
 from src.repos.utils import rooms_ids_for_booking
 from src.models.rooms import RoomsOrm
 from src.repos.base import BaseRepository
-from src.schemas.rooms import Room
+from src.schemas.rooms import Room, RoomWithRels
 # from src.database import engine
 
 
@@ -22,7 +23,14 @@ class RoomsRepository(BaseRepository):
     ):
         rooms_ids_to_get = rooms_ids_for_booking(date_from, date_to, hotel_id)
 
-        return await self.get_filtered(RoomsOrm.id.in_(rooms_ids_to_get))
+        query = (
+            select(self.model)
+            .options(joinedload(self.model.facilities))
+            .filter(RoomsOrm.id.in_(rooms_ids_to_get))
+        )
+        result = await self.session.execute(query)
+
+        return [RoomWithRels.model_validate(obj, from_attributes=True) for obj in result.unique().scalars().all()]
 
 
     async def get_room_price(
@@ -99,3 +107,18 @@ class RoomsRepository(BaseRepository):
             room_id = filters_by.get('id')
             if room_id:
                 await self.update_room_facilities(room_id, facilities_ids)
+
+    async def get_one_with_facilities(self, room_id: int):
+        """Получить номер с загруженными facilities"""
+        query = (
+            select(self.model)
+            .options(joinedload(self.model.facilities))
+            .filter_by(id=room_id)
+        )
+        result = await self.session.execute(query)
+        obj = result.unique().scalars().one_or_none()
+        
+        if obj is None:
+            return None
+        
+        return RoomWithRels.model_validate(obj, from_attributes=True)
