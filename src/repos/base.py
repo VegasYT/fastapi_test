@@ -2,10 +2,12 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 from sqlalchemy import delete, func, insert, select, update
 
+from src.repos.mappers.base import DataMapper
+
 
 class BaseRepository:
     model = None
-    schema: BaseModel = None
+    mapper: DataMapper = None
 
     def __init__(self, session):
         self.session = session
@@ -36,8 +38,8 @@ class BaseRepository:
         )
         result = await self.session.execute(query)
 
-        return [self.schema.model_validate(obj, from_attributes=True) for obj in result.scalars().all()]
-    
+        return [self.mapper.map_to_domain_entity(obj, from_attributes=True) for obj in result.scalars().all()]
+
     async def get_all(self, *args, **kwargs):
         return await self.get_filtered()
 
@@ -52,18 +54,7 @@ class BaseRepository:
         if obj is None:
             return None
         
-        # print(f"\n\n\n{obj}")
-        return self.schema.model_validate(obj, from_attributes=True)
-
-    # async def add(self, add_data: BaseModel):
-    #     add_stmt = (
-    #         insert(self.model)
-    #         .values(**add_data.model_dump())
-    #         .returning(self.model)
-    #     )
-
-    #     result = await self.session.execute(add_stmt)
-    #     return result.scalar_one()
+        return self.mapper.map_to_domain_entity(obj, from_attributes=True)
 
     async def add(self, add_data: BaseModel):
         # Получаем имена колонок модели
@@ -82,22 +73,11 @@ class BaseRepository:
         
         # await self.session.commit()
         return obj
-    
+
     async def add_bulk(self, data: list[BaseModel]):
         add_data_stmt = insert(self.model).values([item.model_dump() for item in data])
         
         await self.session.execute(add_data_stmt)
-
-    # async def edit(self, update_data: BaseModel, is_patch: bool = False, **filters_by) -> None:
-    #     await self._validate_single_object(**filters_by)
-
-    #     edit_stmt = (
-    #         update(self.model)
-    #         .filter_by(**filters_by)
-    #         .values(**update_data.model_dump(exclude_unset=is_patch))
-    #     )
-
-    #     await self.session.execute(edit_stmt)
 
     async def edit(self, update_data: BaseModel, is_patch: bool = False, **filters_by) -> None:
         await self._validate_single_object(**filters_by)

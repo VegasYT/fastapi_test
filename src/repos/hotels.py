@@ -6,11 +6,13 @@ from src.repos.utils import rooms_ids_for_booking
 from src.schemas.hotels import Hotel
 from src.models.hotels import HotelsOrm
 from src.repos.base import BaseRepository
+from src.repos.mappers.base import DataMapper
+from src.repos.mappers.mappers import HotelDataMapper
 
 
 class HotelsRepository(BaseRepository):
     model = HotelsOrm
-    schema = Hotel
+    mapper = HotelDataMapper
 
     async def get_filtered_by_time(
             self,

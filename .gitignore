@@ -1,4 +1,8 @@
-migrations/versions/
+# Игнорировать все файлы в migrations/versions
+src/migrations/versions/*
+# Но не игнорировать саму папку (пустую)
+!src/migrations/versions/
+
 course_venv
 __pycache__
 .env
