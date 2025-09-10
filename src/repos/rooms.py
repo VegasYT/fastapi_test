@@ -1,19 +1,19 @@
 from datetime import date
 from pydantic import BaseModel
-from sqlalchemy import delete, insert, select, update
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy import delete, insert, select
+from sqlalchemy.orm import joinedload
 
+from src.repos.mappers.mappers import RoomDataMapper, RoomDataWithRelsMapper
 from src.models.facilities import RoomsFacilitiesOrm
 from src.repos.utils import rooms_ids_for_booking
 from src.models.rooms import RoomsOrm
 from src.repos.base import BaseRepository
 from src.schemas.rooms import Room, RoomWithRels
-# from src.database import engine
 
 
 class RoomsRepository(BaseRepository):
     model = RoomsOrm
-    schema = Room
+    mapper = RoomDataMapper
 
     async def get_filtered_by_time(
         self, 
@@ -30,7 +30,7 @@ class RoomsRepository(BaseRepository):
         )
         result = await self.session.execute(query)
 
-        return [RoomWithRels.model_validate(obj, from_attributes=True) for obj in result.unique().scalars().all()]
+        return [RoomDataWithRelsMapper.map_to_domain_entity(obj) for obj in result.unique().scalars().all()]
 
 
     async def get_room_price(
@@ -87,6 +87,7 @@ class RoomsRepository(BaseRepository):
             insert_stmt = insert(RoomsFacilitiesOrm).values(insert_data)
             await self.session.execute(insert_stmt)
 
+
     async def edit_with_facilities(self, update_data: BaseModel, is_patch: bool = False, **filters_by):
         """
         Обновляет номер и его удобства, используя разные методы для разных частей
@@ -108,6 +109,7 @@ class RoomsRepository(BaseRepository):
             if room_id:
                 await self.update_room_facilities(room_id, facilities_ids)
 
+
     async def get_one_with_facilities(self, room_id: int):
         """Получить номер с загруженными facilities"""
         query = (
@@ -121,4 +123,4 @@ class RoomsRepository(BaseRepository):
         if obj is None:
             return None
         
-        return RoomWithRels.model_validate(obj, from_attributes=True)
+        return RoomDataWithRelsMapper.map_to_domain_entity(obj)

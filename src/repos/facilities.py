@@ -1,6 +1,7 @@
 from datetime import date
 from sqlalchemy import func, select
 
+from src.repos.mappers.mappers import FacilityDataMapper, RoomFacilityDataMapper
 from src.models.rooms import RoomsOrm
 from src.repos.utils import rooms_ids_for_booking
 from src.schemas.facilities import Facility, RoomFacility
@@ -10,7 +11,7 @@ from src.repos.base import BaseRepository
 
 class FacilitiesRepository(BaseRepository):
     model = FacilitiesOrm
-    schema = Facility
+    mapper = FacilityDataMapper
 
     async def get_filtered_by_pagination(
             self,
@@ -32,4 +33,4 @@ class FacilitiesRepository(BaseRepository):
 
 class RoomsFacilitiesRepository(BaseRepository):
     model = RoomsFacilitiesOrm
-    schema = RoomFacility
+    mapper = RoomFacilityDataMapper

@@ -1,5 +1,6 @@
 from sqlalchemy import func, select
 
+from src.repos.mappers.mappers import BookingDataMapper
 from src.schemas.bookings import Booking, BookingGetAllResponse
 from src.models.bookings import BookingsOrm
 from src.repos.base import BaseRepository
@@ -7,7 +8,7 @@ from src.repos.base import BaseRepository
 
 class BookingsRepository(BaseRepository):
     model = BookingsOrm
-    schema = Booking
+    mapper = BookingDataMapper
 
     async def get_all(
             self, 

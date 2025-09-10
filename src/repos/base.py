@@ -38,7 +38,7 @@ class BaseRepository:
         )
         result = await self.session.execute(query)
 
-        return [self.mapper.map_to_domain_entity(obj, from_attributes=True) for obj in result.scalars().all()]
+        return [self.mapper.map_to_domain_entity(obj) for obj in result.scalars().all()]
 
     async def get_all(self, *args, **kwargs):
         return await self.get_filtered()
@@ -54,7 +54,7 @@ class BaseRepository:
         if obj is None:
             return None
         
-        return self.mapper.map_to_domain_entity(obj, from_attributes=True)
+        return self.mapper.map_to_domain_entity(obj)
 
     async def add(self, add_data: BaseModel):
         # Получаем имена колонок модели
