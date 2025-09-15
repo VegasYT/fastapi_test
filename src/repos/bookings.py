@@ -1,4 +1,6 @@
-from sqlalchemy import func, select
+from datetime import date
+
+from sqlalchemy import select
 
 from src.repos.mappers.mappers import BookingDataMapper
 from src.schemas.bookings import Booking, BookingGetAllResponse
@@ -30,3 +32,11 @@ class BookingsRepository(BaseRepository):
         result = await self.session.execute(query)
 
         return [BookingGetAllResponse.model_validate(booking, from_attributes=True) for booking in result.scalars().all()]
+
+    async def get_bookings_with_today_checkin(self):
+        query = (
+            select(BookingsOrm)
+            .filter(BookingsOrm.date_from == date.today())
+        )
+        res = await self.session.execute(query)
+        return [self.mapper.map_to_domain_entity(booking) for booking in res.scalars().all()]
