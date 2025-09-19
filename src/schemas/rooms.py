@@ -6,7 +6,7 @@ from src.schemas.facilities import Facility
 class RoomAdd(BaseModel):
     hotel_id: int
     title: str
-    description: str
+    description: str | None = None
     price: int
     quantity: int
     facilities_ids: list[int] | None = None
