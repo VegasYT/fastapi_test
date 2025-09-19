@@ -5,4 +5,4 @@ src/migrations/versions/*
 
 course_venv
 __pycache__
-.env
+.env*

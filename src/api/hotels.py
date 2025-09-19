@@ -18,8 +18,8 @@ async def get_hotels(
     pagination: PaginationDep,
     location: str | None = Query(None, description="Местоположение"),
     title: str | None = Query(None, description="Название отеля"),
-    date_from: date = Query(example="2025-07-02"),
-    date_to: date = Query(example="2025-07-11"),
+    date_from: date = Query(examples=["2025-07-02"]),
+    date_to: date = Query(examples=["2025-07-11"]),
 ):
     page_size = pagination.page_size or 5
     # limit = page_size
