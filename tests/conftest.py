@@ -5,17 +5,23 @@ from httpx import ASGITransport, AsyncClient
 
 from src.schemas.hotels import HotelAdd
 from src.schemas.rooms import RoomAdd
-from src.repos.hotels import HotelsRepository
-from src.repos.rooms import RoomsRepository
+from src.database import async_session_maker_null_pool
 from src.config import settings
 from src.database import Base, engine_null_pool
 from src.main import app
 from src.models import *
+from src.utils.db_manager import DBManager
 
 
 @pytest.fixture(scope="session", autouse=True)
 def check_test_mode():
     assert settings.MODE == "TEST"
+
+
+@pytest.fixture(scope="function")
+async def db() -> DBManager: # type: ignore
+    async with DBManager(session_factory=async_session_maker_null_pool) as db:
+        yield db
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -26,36 +32,36 @@ async def create_test_db(check_test_mode):
 
 
 @pytest.fixture(scope="session", autouse=True)
-async def load_mock_data(register_user):
+async def load_mock_data(create_test_db):
     async with engine_null_pool.begin() as session:
-        # Загрузка данных отелей
-        hotels_file = Path(__file__).parent / "mock_hotels.json"
-        with open(hotels_file, "r", encoding="utf-8") as f:
-            hotels_data = json.load(f)
-        
-        for hotel_data in hotels_data:
-            hotel_add = HotelAdd(**hotel_data)
-            await HotelsRepository(session).add(hotel_add)
-        
-        # Загрузка данных комнат
-        rooms_file = Path(__file__).parent / "mock_rooms.json"
-        with open(rooms_file, "r", encoding="utf-8") as f:
-            rooms_data = json.load(f)
-        
-        for room_data in rooms_data:
-            room_add = RoomAdd(**room_data)
-            await RoomsRepository(session).add(room_add)
-        
-        await session.commit()
+        with open("tests/mock_hotels.json", encoding="utf-8") as file_hotels:
+            hotels = json.load(file_hotels)
+        with open("tests/mock_rooms.json", encoding="utf-8") as file_rooms:
+            rooms = json.load(file_rooms)
+
+        hotels = [HotelAdd.model_validate(hotel) for hotel in hotels]
+        rooms = [RoomAdd.model_validate(room) for room in rooms]
+
+        async with DBManager(session_factory=async_session_maker_null_pool) as db_:
+            await db_.hotels.add_bulk(hotels)
+            await db_.rooms.add_bulk(rooms)
+            await db_.commit()
+
+
+@pytest.fixture(scope="session")
+async def ac() -> AsyncClient: # type: ignore
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        yield ac
 
 
 @pytest.fixture(scope="session", autouse=True)
-async def register_user(create_test_db):
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-        await ac.post(
-            "/auth/register",
-            json={
-                "email": "user@mail.ru",
-                "password": "1234"
-            }
-        )
+async def register_user(ac, load_mock_data):
+    await ac.post(
+        "/auth/register",
+        json={
+            "email": "user@mail.ru",
+            "password": "1234",
+            "first_name": "Тоха",
+            "last_name": "Сиплый"
+        }
+    )

@@ -75,8 +75,16 @@ class BaseRepository:
         return obj
 
     async def add_bulk(self, data: list[BaseModel]):
-        add_data_stmt = insert(self.model).values([item.model_dump() for item in data])
+        # Получаем имена колонок модели
+        column_names = {c.name for c in self.model.__table__.columns}
         
+        # Фильтруем данные, исключая поля, которых нет в модели
+        filtered_data = [
+            {k: v for k, v in item.model_dump().items() if k in column_names}
+            for item in data
+        ]
+        
+        add_data_stmt = insert(self.model).values(filtered_data)
         await self.session.execute(add_data_stmt)
 
     async def edit(self, update_data: BaseModel, is_patch: bool = False, **filters_by) -> None:
