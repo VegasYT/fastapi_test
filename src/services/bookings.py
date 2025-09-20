@@ -23,7 +23,8 @@ class BookingService:
             price=room_price,
         )
 
-        res = await self.db.bookings.add(internal_data)
-        await self.db.commit()
+        room = await self.db.rooms.get_one_or_none(id=booking_data.room_id)
+
+        res = await self.db.bookings.add_booking(internal_data, room.hotel_id)
 
         return res
