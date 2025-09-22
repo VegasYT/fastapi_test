@@ -91,7 +91,6 @@ async def auth_ac(ac, register_user):
 
 @pytest.fixture(scope="session")
 async def drop_bookings_table(create_test_db):
-    async with engine_null_pool.begin() as conn:
-        bookings_table = Base.metadata.tables["bookings"]
-        await conn.run_sync(lambda sync_conn: Base.metadata.drop_all(bind=sync_conn, tables=[bookings_table]))
-        await conn.run_sync(lambda sync_conn: Base.metadata.create_all(bind=sync_conn, tables=[bookings_table]))
+    async for _db in get_db_null_pool():
+        await _db.bookings.delete()
+        await _db.commit()
