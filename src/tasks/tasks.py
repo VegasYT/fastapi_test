@@ -10,7 +10,7 @@ from src.utils.db_manager import DBManager
 
 @celery_instance.task
 def test_task():
-    sleep(5)
+    sleep(3)
     print("Ам ам")
 
 

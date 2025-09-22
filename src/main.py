@@ -1,6 +1,8 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from unittest import mock
+mock.patch("fastapi_cache.decorator.cache", lambda *args, **kwargs: lambda f: f).start()
 import uvicorn
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
