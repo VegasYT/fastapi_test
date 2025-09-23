@@ -14,28 +14,19 @@ class BaseRepository:
 
     async def _validate_single_object(self, **filters_by) -> None:
         count = await self.session.scalar(
-            select(func.count())
-            .select_from(self.model)
-            .filter_by(**filters_by)
+            select(func.count()).select_from(self.model).filter_by(**filters_by)
         )
 
         if count == 0:
-            raise HTTPException(
-                status_code=404,
-                detail=f"{self.model.__name__} not found"
-            )
+            raise HTTPException(status_code=404, detail=f"{self.model.__name__} not found")
         if count > 1:
             raise HTTPException(
                 status_code=422,
-                detail=f"Несколько объектов {self.model.__name__} соответствуют критериям"
+                detail=f"Несколько объектов {self.model.__name__} соответствуют критериям",
             )
 
     async def get_filtered(self, *filter, **filter_by):
-        query = (
-            select(self.model)
-            .filter(*filter)
-            .filter_by(**filter_by)
-        )
+        query = select(self.model).filter(*filter).filter_by(**filter_by)
         result = await self.session.execute(query)
 
         return [self.mapper.map_to_domain_entity(obj) for obj in result.scalars().all()]
@@ -44,16 +35,13 @@ class BaseRepository:
         return await self.get_filtered()
 
     async def get_one_or_none(self, **filter_by):
-        query = (
-            select(self.model)
-            .filter_by(**filter_by)
-        )
+        query = select(self.model).filter_by(**filter_by)
         result = await self.session.execute(query)
 
         obj = result.scalars().one_or_none()
         if obj is None:
             return None
-        
+
         return self.mapper.map_to_domain_entity(obj)
 
     async def add(self, add_data: BaseModel):
@@ -61,29 +49,26 @@ class BaseRepository:
         column_names = {c.name for c in self.model.__table__.columns}
 
         # Исключаем поля, которых нет в колонках модели
-        add_data_dict = add_data.model_dump(exclude={k for k in add_data.model_dump().keys() if k not in column_names})
-        
-        add_stmt = (
-            insert(self.model)
-            .values(**add_data_dict)
-            .returning(self.model)
+        add_data_dict = add_data.model_dump(
+            exclude={k for k in add_data.model_dump().keys() if k not in column_names}
         )
+
+        add_stmt = insert(self.model).values(**add_data_dict).returning(self.model)
         result = await self.session.execute(add_stmt)
         obj = result.scalar_one()
-        
+
         # await self.session.commit()
         return obj
 
     async def add_bulk(self, data: list[BaseModel]):
         # Получаем имена колонок модели
         column_names = {c.name for c in self.model.__table__.columns}
-        
+
         # Фильтруем данные, исключая поля, которых нет в модели
         filtered_data = [
-            {k: v for k, v in item.model_dump().items() if k in column_names}
-            for item in data
+            {k: v for k, v in item.model_dump().items() if k in column_names} for item in data
         ]
-        
+
         add_data_stmt = insert(self.model).values(filtered_data)
         await self.session.execute(add_data_stmt)
 
@@ -93,21 +78,17 @@ class BaseRepository:
         # Получаем имена колонок модели
         column_names = {c.name for c in self.model.__table__.columns}
         # Исключаем поля, которых нет в колонках модели
-        update_data_dict = update_data.model_dump(exclude={k for k in update_data.model_dump().keys() if k not in column_names}, exclude_unset=is_patch)
-        
-        edit_stmt = (
-            update(self.model)
-            .filter_by(**filters_by)
-            .values(**update_data_dict)
+        update_data_dict = update_data.model_dump(
+            exclude={k for k in update_data.model_dump().keys() if k not in column_names},
+            exclude_unset=is_patch,
         )
+
+        edit_stmt = update(self.model).filter_by(**filters_by).values(**update_data_dict)
         await self.session.execute(edit_stmt)
 
     async def delete(self, **filters_by) -> None:
         await self._validate_single_object(**filters_by)
 
-        delete_stmt = (
-            delete(self.model)
-            .filter_by(**filters_by)
-        )
+        delete_stmt = delete(self.model).filter_by(**filters_by)
 
         await self.session.execute(delete_stmt)

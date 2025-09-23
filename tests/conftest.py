@@ -8,7 +8,7 @@ from src.database import async_session_maker_null_pool
 from src.config import settings
 from src.database import Base, engine_null_pool
 from src.main import app
-from src.models import * # noqa: F403
+from src.models import *  # noqa: F403
 from src.utils.db_manager import DBManager
 from src.api.dependencies import get_db
 
@@ -24,7 +24,7 @@ async def get_db_null_pool():
 
 
 @pytest.fixture(scope="function")
-async def db() -> DBManager: # type: ignore
+async def db() -> DBManager:  # type: ignore
     async for db in get_db_null_pool():
         yield db
 
@@ -57,7 +57,7 @@ async def load_mock_data(create_test_db):
 
 
 @pytest.fixture(scope="session")
-async def ac() -> AsyncClient: # type: ignore
+async def ac() -> AsyncClient:  # type: ignore
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         yield ac
 
@@ -70,20 +70,14 @@ async def register_user(ac, load_mock_data):
             "email": "user@mail.ru",
             "password": "1234",
             "first_name": "Тоха",
-            "last_name": "Сиплый"
-        }
+            "last_name": "Сиплый",
+        },
     )
 
 
 @pytest.fixture(scope="session")
 async def auth_ac(ac, register_user):
-    await ac.post(
-        "/auth/login",
-        json={
-            "email": "user@mail.ru",
-            "password": "1234"
-        }
-    )
+    await ac.post("/auth/login", json={"email": "user@mail.ru", "password": "1234"})
     assert ac.cookies["access_token"]
     yield ac
 
@@ -92,5 +86,9 @@ async def auth_ac(ac, register_user):
 async def drop_bookings_table(create_test_db):
     async with engine_null_pool.begin() as conn:
         bookings_table = Base.metadata.tables["bookings"]
-        await conn.run_sync(lambda sync_conn: Base.metadata.drop_all(bind=sync_conn, tables=[bookings_table]))
-        await conn.run_sync(lambda sync_conn: Base.metadata.create_all(bind=sync_conn, tables=[bookings_table]))
+        await conn.run_sync(
+            lambda sync_conn: Base.metadata.drop_all(bind=sync_conn, tables=[bookings_table])
+        )
+        await conn.run_sync(
+            lambda sync_conn: Base.metadata.create_all(bind=sync_conn, tables=[bookings_table])
+        )

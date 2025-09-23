@@ -11,9 +11,9 @@ class FacilitiesRepository(BaseRepository):
     mapper = FacilityDataMapper
 
     async def get_filtered_by_pagination(
-            self,
-            limit: int | None = None,
-            offset: int | None = None,
+        self,
+        limit: int | None = None,
+        offset: int | None = None,
     ):
         query = select(FacilitiesOrm)
 
@@ -25,8 +25,11 @@ class FacilitiesRepository(BaseRepository):
 
         result = await self.session.execute(query)
 
-        return [Facility.model_validate(facility, from_attributes=True) for facility in result.scalars().all()]
-    
+        return [
+            Facility.model_validate(facility, from_attributes=True)
+            for facility in result.scalars().all()
+        ]
+
 
 class RoomsFacilitiesRepository(BaseRepository):
     model = RoomsFacilitiesOrm

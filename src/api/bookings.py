@@ -28,10 +28,7 @@ async def get_bookings(
     page_size = pagination.page_size or 5
     offset = page_size * (pagination.page_number - 1)
 
-    return await db.bookings.get_all(
-        limit=page_size, 
-        offset=offset
-    )
+    return await db.bookings.get_all(limit=page_size, offset=offset)
 
 
 @router.get("/me")
@@ -43,8 +40,4 @@ async def get_bookings_me(
     page_size = pagination.page_size or 5
     offset = page_size * (pagination.page_number - 1)
 
-    return await db.bookings.get_all(
-        user_id=user_id,
-        limit=page_size, 
-        offset=offset
-    )
+    return await db.bookings.get_all(user_id=user_id, limit=page_size, offset=offset)

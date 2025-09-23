@@ -7,7 +7,7 @@ from src.api.dependencies import DBDep
 
 
 router = APIRouter(prefix="/rooms", tags=["Номера"])
- 
+
 
 @router.get("")
 async def get_rooms(
@@ -27,7 +27,7 @@ async def get_rooms(
         date_to=date_to,
         # room_title=room_title,
         hotel_id=hotel_id,
-        # limit=limit, 
+        # limit=limit,
         # offset=offset
     )
 
@@ -35,34 +35,38 @@ async def get_rooms(
 @router.post("")
 async def create_room(
     db: DBDep,
-    room_data: RoomAdd = Body(openapi_examples={
-        "1": {
-            "summary": "Эконом",
-            "value": {
-                "hotel_id": 1,
-                "title": "Эконом трехместный",
-                "description": "Большая двухместная кровать + одноместная",
-                "price": 1000,
-                "quantity": 5,
-                "facilities_ids": [1],
-            }
-        },
-        "2": {
-            "summary": "Люкс",
-            "value": {
-                "hotel_id": 1,
-                "title": "Люкс двухместный",
-                "description": "Большая двухместная кровать",
-                "price": 5000,
-                "quantity": 2,
-                "facilities_ids": [1, 2],
-            }
+    room_data: RoomAdd = Body(
+        openapi_examples={
+            "1": {
+                "summary": "Эконом",
+                "value": {
+                    "hotel_id": 1,
+                    "title": "Эконом трехместный",
+                    "description": "Большая двухместная кровать + одноместная",
+                    "price": 1000,
+                    "quantity": 5,
+                    "facilities_ids": [1],
+                },
+            },
+            "2": {
+                "summary": "Люкс",
+                "value": {
+                    "hotel_id": 1,
+                    "title": "Люкс двухместный",
+                    "description": "Большая двухместная кровать",
+                    "price": 5000,
+                    "quantity": 2,
+                    "facilities_ids": [1, 2],
+                },
+            },
         }
-    }),
+    ),
 ):
     room = await db.rooms.add(room_data)
 
-    rooms_facilities_data = [RoomFacilityAdd(room_id=room.id, facility_id=f_id) for f_id in room_data.facilities_ids]
+    rooms_facilities_data = [
+        RoomFacilityAdd(room_id=room.id, facility_id=f_id) for f_id in room_data.facilities_ids
+    ]
     await db.rooms_facilities.add_bulk(rooms_facilities_data)
 
     await db.commit()
@@ -70,10 +74,7 @@ async def create_room(
 
 
 @router.get("/{room_id}")
-async def get_room(
-    db: DBDep,
-    room_id: int
-):
+async def get_room(db: DBDep, room_id: int):
     room = await db.rooms.get_one_with_facilities(room_id)
     if room is None:
         raise HTTPException(status_code=404, detail="Номер не найден")
@@ -86,10 +87,7 @@ async def edit_room(
     room_id: int,
     update_data: RoomAdd = Body(),
 ):
-    await db.rooms.edit_with_facilities(
-        update_data, 
-        id=room_id
-    )
+    await db.rooms.edit_with_facilities(update_data, id=room_id)
 
     await db.commit()
     return {"status": "OK"}
@@ -100,29 +98,16 @@ async def edit_room(
     summary="Частичное обновление данных номера",
     description="<h1>Тут мы частично обновляем данные номера</h1>",
 )
-async def partially_edit_room(
-    db: DBDep,
-    room_id: int,
-    room_data: RoomPATCH
-):
-    await db.rooms.edit_with_facilities(
-        room_data, 
-        is_patch=True, 
-        id=room_id
-    )
+async def partially_edit_room(db: DBDep, room_id: int, room_data: RoomPATCH):
+    await db.rooms.edit_with_facilities(room_data, is_patch=True, id=room_id)
 
     await db.commit()
     return {"status": "OK"}
 
 
 @router.delete("/{room_id}")
-async def delete_room(
-    db: DBDep,
-    room_id: int
-):
-    await db.rooms.delete(
-        id=room_id
-    )
+async def delete_room(db: DBDep, room_id: int):
+    await db.rooms.delete(id=room_id)
 
     await db.commit()
     return {"status": "OK"}

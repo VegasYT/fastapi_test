@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from unittest import mock
+
 mock.patch("fastapi_cache.decorator.cache", lambda *args, **kwargs: lambda f: f).start()
 import uvicorn
 from fastapi_cache import FastAPICache
@@ -10,6 +11,7 @@ from fastapi_cache.backends.redis import RedisBackend
 
 import sys
 from pathlib import Path
+
 sys.path.append(str(Path(__file__).parent.parent))
 from src.init import redis_manager
 from src.api.hotels import router as router_hotels
@@ -18,7 +20,7 @@ from src.api.auth import router as router_auth
 from src.api.bookings import router as router_bookings
 from src.api.facilities import router as router_facilities
 from src.api.images import router as router_images
-from src.database import * # noqa
+from src.database import *  # noqa
 
 
 @asynccontextmanager
