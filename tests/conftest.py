@@ -1,4 +1,5 @@
 import json
+from typing import AsyncGenerator
 import pytest
 from httpx import ASGITransport, AsyncClient
 
@@ -24,7 +25,7 @@ async def get_db_null_pool():
 
 
 @pytest.fixture(scope="function")
-async def db() -> DBManager:  # type: ignore
+async def db() -> AsyncGenerator[DBManager]:
     async for db in get_db_null_pool():
         yield db
 
@@ -57,7 +58,7 @@ async def load_mock_data(create_test_db):
 
 
 @pytest.fixture(scope="session")
-async def ac() -> AsyncClient:  # type: ignore
+async def ac() -> AsyncGenerator[AsyncClient]:
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         yield ac
 

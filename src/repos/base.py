@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from pydantic import BaseModel
-from sqlalchemy import delete, func, insert, select, update
+from sqlalchemy import Sequence, delete, func, insert, select, update
 
 from src.repos.mappers.base import DataMapper
 
@@ -60,7 +60,7 @@ class BaseRepository:
         # await self.session.commit()
         return obj
 
-    async def add_bulk(self, data: list[BaseModel]):
+    async def add_bulk(self, data: Sequence[BaseModel]):
         # Получаем имена колонок модели
         column_names = {c.name for c in self.model.__table__.columns}
 
