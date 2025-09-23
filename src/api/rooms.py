@@ -1,12 +1,10 @@
 from datetime import date
-from fastapi import Query, Body, APIRouter, Body, HTTPException
+from fastapi import Query, Body, APIRouter, HTTPException
 
 from src.schemas.facilities import RoomFacilityAdd
-from src.repos.rooms import RoomsRepository
-from src.schemas.rooms import Room, RoomAdd, RoomPATCH
-from src.api.dependencies import DBDep, PaginationDep
-from src.database import async_session_maker, engine
- 
+from src.schemas.rooms import RoomAdd, RoomPATCH
+from src.api.dependencies import DBDep
+
 
 router = APIRouter(prefix="/rooms", tags=["Номера"])
  

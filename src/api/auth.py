@@ -1,9 +1,7 @@
 from fastapi import APIRouter, HTTPException, Response
  
 from src.api.dependencies import DBDep, UserIdDep
-from src.repos.users import UsersRepository
 from src.schemas.users import UserAdd, UserRequestAdd, UserRequestLogin
-from src.database import async_session_maker
 from src.services.auth import AuthService
 
 
@@ -30,7 +28,7 @@ async def register_user(
             detail="Пользователь с таким email уже существует"
         )
     
-    user = await db.users.add(new_user_data)
+    await db.users.add(new_user_data)
 
     await db.commit()
     return {"status": "OK"}

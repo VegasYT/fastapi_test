@@ -1,5 +1,4 @@
 import json
-from pathlib import Path
 import pytest
 from httpx import ASGITransport, AsyncClient
 
@@ -9,7 +8,7 @@ from src.database import async_session_maker_null_pool
 from src.config import settings
 from src.database import Base, engine_null_pool
 from src.main import app
-from src.models import *
+from src.models import * # noqa: F403
 from src.utils.db_manager import DBManager
 from src.api.dependencies import get_db
 
@@ -42,7 +41,7 @@ async def create_test_db(check_test_mode):
 
 @pytest.fixture(scope="session", autouse=True)
 async def load_mock_data(create_test_db):
-    async with engine_null_pool.begin() as session:
+    async with engine_null_pool.begin():
         with open("tests/mock_hotels.json", encoding="utf-8") as file_hotels:
             hotels = json.load(file_hotels)
         with open("tests/mock_rooms.json", encoding="utf-8") as file_rooms:
@@ -91,6 +90,7 @@ async def auth_ac(ac, register_user):
 
 @pytest.fixture(scope="session")
 async def drop_bookings_table(create_test_db):
-    async for _db in get_db_null_pool():
-        await _db.bookings.delete()
-        await _db.commit()
+    async with engine_null_pool.begin() as conn:
+        bookings_table = Base.metadata.tables["bookings"]
+        await conn.run_sync(lambda sync_conn: Base.metadata.drop_all(bind=sync_conn, tables=[bookings_table]))
+        await conn.run_sync(lambda sync_conn: Base.metadata.create_all(bind=sync_conn, tables=[bookings_table]))

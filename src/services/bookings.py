@@ -1,9 +1,4 @@
-from fastapi import Depends
-
-from src.repos.bookings import BookingsRepository
-from src.repos.rooms import RoomsRepository
 from src.schemas.bookings import BookingAddInternal, BookingAddRequest
-from src.repos.base import BaseRepository
 
 
 class BookingService:

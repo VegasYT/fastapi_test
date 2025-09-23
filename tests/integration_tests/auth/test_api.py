@@ -42,3 +42,4 @@ async def test_auth_flow(
 
         me_logout_resp = await ac.get("/auth/me")
         assert me_logout_resp.status_code == 401
+        assert "access_token" not in ac.cookies
