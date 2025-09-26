@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Response
 
+from src.exceptions import UniqueViolationException
 from src.api.dependencies import DBDep, UserIdDep
 from src.schemas.users import UserAdd, UserRequestAdd, UserRequestLogin
 from src.services.auth import AuthService
@@ -18,11 +19,14 @@ async def register_user(db: DBDep, data: UserRequestAdd):
         last_name=data.last_name,
     )
 
-    existing_user = await db.users.get_one_or_none(email=data.email)
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Пользователь с таким email уже существует")
+    # existing_user = await db.users.get_one_or_none(email=data.email)
+    # if existing_user:
+    #     raise HTTPException(status_code=400, detail="Пользователь с таким email уже существует")
 
-    await db.users.add(new_user_data)
+    try:
+        await db.users.add(new_user_data)
+    except UniqueViolationException:
+        raise HTTPException(status_code=409, detail="Такой пользователь уже сущестувет")
 
     await db.commit()
     return {"status": "OK"}

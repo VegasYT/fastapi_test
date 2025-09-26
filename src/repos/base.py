@@ -1,8 +1,10 @@
 from fastapi import HTTPException
 from pydantic import BaseModel
 from sqlalchemy import Sequence, delete, func, insert, select, update
+from sqlalchemy.exc import NoResultFound, IntegrityError
 
 from src.repos.mappers.base import DataMapper
+from src.exceptions import ObjectNotFoundException, UniqueViolationException
 
 
 class BaseRepository:
@@ -43,6 +45,15 @@ class BaseRepository:
             return None
 
         return self.mapper.map_to_domain_entity(obj)
+    
+    async def get_one(self, **filter_by) -> BaseModel:
+        query = select(self.model).filter_by(**filter_by)
+        result = await self.session.execute(query)
+        try:
+            model = result.scalar_one()
+        except NoResultFound:
+            raise ObjectNotFoundException
+        return self.mapper.map_to_domain_entity(model)
 
     async def add(self, add_data: BaseModel):
         # Получаем имена колонок модели
@@ -54,10 +65,16 @@ class BaseRepository:
         )
 
         add_stmt = insert(self.model).values(**add_data_dict).returning(self.model)
-        result = await self.session.execute(add_stmt)
-        obj = result.scalar_one()
 
-        # await self.session.commit()
+        try:
+            result = await self.session.execute(add_stmt)
+        except IntegrityError as e:
+            if "UniqueViolationError" in str(e.orig):
+                raise UniqueViolationException
+            elif "ForeignKeyViolationError" in str(e.orig):
+                raise ObjectNotFoundException
+
+        obj = result.scalar_one()
         return obj
 
     async def add_bulk(self, data: Sequence[BaseModel]):
@@ -84,11 +101,24 @@ class BaseRepository:
         )
 
         edit_stmt = update(self.model).filter_by(**filters_by).values(**update_data_dict)
-        await self.session.execute(edit_stmt)
 
+        try:
+            await self.session.execute(edit_stmt)
+        except IntegrityError as e:
+            if "UniqueViolationError" in str(e.orig):
+                raise UniqueViolationException
+            elif "ForeignKeyViolationError" in str(e.orig):
+                raise ObjectNotFoundException
+            
     async def delete(self, **filters_by) -> None:
         await self._validate_single_object(**filters_by)
 
         delete_stmt = delete(self.model).filter_by(**filters_by)
 
-        await self.session.execute(delete_stmt)
+        try:
+            await self.session.execute(delete_stmt)
+        except IntegrityError as e:
+            if "UniqueViolationError" in str(e.orig):
+                raise UniqueViolationException
+            elif "ForeignKeyViolationError" in str(e.orig):
+                raise ObjectNotFoundException

@@ -2,7 +2,10 @@ from datetime import date
 from pydantic import BaseModel
 from sqlalchemy import delete, insert, select
 from sqlalchemy.orm import joinedload
+from sqlalchemy.exc import NoResultFound, IntegrityError
 
+
+from src.exceptions import IncorrectDateException, ObjectNotFoundException, UniqueViolationException
 from src.repos.mappers.mappers import RoomDataMapper, RoomDataWithRelsMapper
 from src.models.facilities import RoomsFacilitiesOrm
 from src.repos.utils import rooms_ids_for_booking
@@ -20,6 +23,9 @@ class RoomsRepository(BaseRepository):
         date_from: date | None = None,
         date_to: date | None = None,
     ):
+        if date_from > date_to:
+            raise IncorrectDateException
+        
         rooms_ids_to_get = rooms_ids_for_booking(date_from, date_to, hotel_id)
 
         query = (
@@ -33,13 +39,6 @@ class RoomsRepository(BaseRepository):
             RoomDataWithRelsMapper.map_to_domain_entity(obj)
             for obj in result.unique().scalars().all()
         ]
-
-    async def get_room_price(self, room_id) -> int:
-        query = select(RoomsOrm.price).where(RoomsOrm.id == room_id)
-
-        result = await self.session.execute(query)
-
-        return result.scalar_one()
 
     async def update_room_facilities(self, room_id: int, new_facility_ids: list[int] | None):
         """
@@ -78,7 +77,14 @@ class RoomsRepository(BaseRepository):
                 for facility_id in facilities_to_add
             ]
             insert_stmt = insert(RoomsFacilitiesOrm).values(insert_data)
-            await self.session.execute(insert_stmt)
+
+            try:
+                await self.session.execute(insert_stmt)
+            except IntegrityError as e:
+                if "UniqueViolationError" in str(e.orig):
+                    raise UniqueViolationException
+                elif "ForeignKeyViolationError" in str(e.orig):
+                    raise ObjectNotFoundException
 
     async def edit_with_facilities(
         self, update_data: BaseModel, is_patch: bool = False, **filters_by
@@ -107,9 +113,9 @@ class RoomsRepository(BaseRepository):
         """Получить номер с загруженными facilities"""
         query = select(self.model).options(joinedload(self.model.facilities)).filter_by(id=room_id)
         result = await self.session.execute(query)
-        obj = result.unique().scalars().one_or_none()
-
-        if obj is None:
-            return None
+        try:
+            obj = result.unique().scalars().one()
+        except NoResultFound:
+            raise ObjectNotFoundException
 
         return RoomDataWithRelsMapper.map_to_domain_entity(obj)

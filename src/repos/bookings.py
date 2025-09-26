@@ -1,8 +1,8 @@
 from datetime import date
 
-from fastapi import HTTPException
 from sqlalchemy import select
 
+from src.exceptions import AllRoomsAreBookedException, IncorrectDateException
 from src.repos.utils import rooms_ids_for_booking
 from src.repos.mappers.mappers import BookingDataMapper
 from src.schemas.bookings import Booking, BookingGetAllResponse, BookingAddInternal
@@ -35,6 +35,9 @@ class BookingsRepository(BaseRepository):
         return [self.mapper.map_to_domain_entity(booking) for booking in res.scalars().all()]
 
     async def add_booking(self, booking_data: BookingAddInternal, hotel_id: int):
+        if booking_data.date_from > booking_data.date_to:
+            raise IncorrectDateException
+    
         rooms_ids_to_get = rooms_ids_for_booking(
             booking_data.date_from, booking_data.date_to, hotel_id
         )
@@ -43,9 +46,7 @@ class BookingsRepository(BaseRepository):
         rooms_for_bookings = rooms_for_bookings_res.unique().scalars().all()
 
         if booking_data.room_id not in rooms_for_bookings:
-            raise HTTPException(
-                status_code=409, detail="Выбранная комната недоступна в указанные даты"
-            )
+            raise AllRoomsAreBookedException
 
         booking = await self.add(booking_data)
         return booking

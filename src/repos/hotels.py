@@ -1,6 +1,7 @@
 from datetime import date
 from sqlalchemy import func, select
 
+from src.exceptions import IncorrectDateException
 from src.models.rooms import RoomsOrm
 from src.repos.utils import rooms_ids_for_booking
 from src.schemas.hotels import Hotel
@@ -22,6 +23,12 @@ class HotelsRepository(BaseRepository):
         limit: int | None = None,
         offset: int | None = None,
     ):
+        if date_from > date_to:
+            raise IncorrectDateException
+        
+        print(date_from)
+        print(date_to)
+        
         rooms_ids_to_get = rooms_ids_for_booking(date_from=date_from, date_to=date_to)
         hotels_ids_to_get = (
             select(RoomsOrm.hotel_id)

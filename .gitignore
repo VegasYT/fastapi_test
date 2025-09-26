@@ -6,3 +6,5 @@ src/migrations/versions/*
 course_venv
 __pycache__
 .env*
+.ruff_cache
+.pytest_cache

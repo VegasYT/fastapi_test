@@ -10,7 +10,7 @@ class BookingService:
         booking_data: BookingAddRequest,
         user_id: int,
     ):
-        room_price = await self.db.rooms.get_room_price(room_id=booking_data.room_id)
+        room_price = (await self.db.rooms.get_one(id=booking_data.room_id)).price
 
         internal_data = BookingAddInternal(
             **booking_data.model_dump(),
