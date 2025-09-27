@@ -24,7 +24,6 @@ async def create_bookings(
     except IncorrectDateException as ex:
         raise HTTPException(status_code=400, detail=ex.detail)
 
-    await db.commit()
     return {"status": "OK", "data": booking}
 
 
@@ -33,10 +32,8 @@ async def get_bookings(
     db: DBDep,
     pagination: PaginationDep,
 ):
-    page_size = pagination.page_size or 5
-    offset = page_size * (pagination.page_number - 1)
-
-    return await db.bookings.get_all(limit=page_size, offset=offset)
+    bookings = await BookingService(db).get_bookings(pagination)
+    return bookings
 
 
 @router.get("/me")
@@ -45,7 +42,5 @@ async def get_bookings_me(
     user_id: UserIdDep,
     pagination: PaginationDep,
 ):
-    page_size = pagination.page_size or 5
-    offset = page_size * (pagination.page_number - 1)
-
-    return await db.bookings.get_all(user_id=user_id, limit=page_size, offset=offset)
+    bookings = await BookingService(db).get_bookings_me(user_id, pagination)
+    return bookings

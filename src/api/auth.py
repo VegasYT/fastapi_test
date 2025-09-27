@@ -11,20 +11,8 @@ router = APIRouter(prefix="/auth", tags=["Авторизация и аутент
 
 @router.post("/register")
 async def register_user(db: DBDep, data: UserRequestAdd):
-    hashed_password = AuthService().pwd_context.hash(data.password)
-    new_user_data = UserAdd(
-        email=data.email,
-        hashed_password=hashed_password,
-        first_name=data.first_name,
-        last_name=data.last_name,
-    )
-
-    # existing_user = await db.users.get_one_or_none(email=data.email)
-    # if existing_user:
-    #     raise HTTPException(status_code=400, detail="Пользователь с таким email уже существует")
-
     try:
-        await db.users.add(new_user_data)
+        await AuthService(db).register(data)
     except UniqueViolationException:
         raise HTTPException(status_code=409, detail="Такой пользователь уже сущестувет")
 
@@ -34,24 +22,15 @@ async def register_user(db: DBDep, data: UserRequestAdd):
 
 @router.post("/login")
 async def login_user(db: DBDep, data: UserRequestLogin, response: Response):
-    user = await db.users.get_user_with_hashed_password(email=data.email)
-
-    if not user:
-        raise HTTPException(status_code=401, detail="Неверный логин или пароль")
-
-    if not AuthService().verify_password(data.password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Неверный логин или пароль")
-
+    user = await AuthService(db).login(data)
     access_token = AuthService().create_access_token({"user_id": user.id})
     response.set_cookie("access_token", access_token)
-
-    await db.commit()
     return {"access_token": access_token}
 
 
 @router.get("/me")
 async def get_me(db: DBDep, user_id: UserIdDep):
-    user = await db.users.get_one_or_none(id=user_id)
+    user = await AuthService(db).me(user_id)
     return user
 
 

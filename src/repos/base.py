@@ -113,11 +113,17 @@ class BaseRepository:
 
         try:
             await self.session.execute(edit_stmt)
-        except IntegrityError as e:
-            if "UniqueViolationError" in str(e.orig):
+        except IntegrityError as ex:
+            if "UniqueViolationError" in str(ex.orig):
                 raise UniqueViolationException
-            elif "ForeignKeyViolationError" in str(e.orig):
+            elif "ForeignKeyViolationError" in str(ex.orig):
                 raise ObjectNotFoundException
+            else:
+                logging.exception(
+                    f"Незнакомая ошибка"
+                )
+                raise ex
+
             
     async def delete(self, **filters_by) -> None:
         await self._validate_single_object(**filters_by)
@@ -126,8 +132,13 @@ class BaseRepository:
 
         try:
             await self.session.execute(delete_stmt)
-        except IntegrityError as e:
-            if "UniqueViolationError" in str(e.orig):
+        except IntegrityError as ex:
+            if "UniqueViolationError" in str(ex.orig):
                 raise UniqueViolationException
-            elif "ForeignKeyViolationError" in str(e.orig):
+            elif "ForeignKeyViolationError" in str(ex.orig):
                 raise ObjectNotFoundException
+            else:
+                logging.exception(
+                    f"Незнакомая ошибка"
+                )
+                raise ex

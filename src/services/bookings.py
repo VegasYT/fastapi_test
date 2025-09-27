@@ -1,3 +1,4 @@
+from src.api.dependencies import PaginationDep, UserIdDep
 from src.schemas.bookings import BookingAddInternal, BookingAddRequest
 
 
@@ -22,4 +23,25 @@ class BookingService:
 
         res = await self.db.bookings.add_booking(internal_data, room.hotel_id)
 
+        await self.db.commit()
         return res
+
+
+    async def get_bookings(
+        self,
+        pagination: PaginationDep,
+    ):
+        page_size = pagination.page_size or 5
+        offset = page_size * (pagination.page_number - 1)
+
+        return await self.db.bookings.get_all(limit=page_size, offset=offset)
+
+    async def get_bookings_me(
+        self,
+        user_id: UserIdDep,
+        pagination: PaginationDep,
+    ):
+        page_size = pagination.page_size or 5
+        offset = page_size * (pagination.page_number - 1)
+
+        return await self.db.bookings.get_all(user_id=user_id, limit=page_size, offset=offset)

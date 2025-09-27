@@ -1,6 +1,7 @@
 from fastapi import Body, APIRouter
 from fastapi_cache.decorator import cache
 
+from src.services.facilities import FacilityService
 from src.schemas.facilities import FacilityAdd
 from src.api.dependencies import DBDep, PaginationDep
 from src.tasks.tasks import test_task  # noqa
@@ -44,9 +45,6 @@ async def create_facilities(
         }
     ),
 ):
-    facility = await db.facilities.add(facility_data)
-    await db.commit()
-
-    # test_task.delay()
+    facility = await FacilityService(db).create_facility(facility_data)
 
     return {"status": "OK", "data": facility}

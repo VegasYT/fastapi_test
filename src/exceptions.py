@@ -24,3 +24,10 @@ class UserAlreadyExistsException(NabronirovalException):
 class IncorrectDateException(NabronirovalException):
     detail = "Неверно указаны даты"
 
+
+class RoomNotFoundException(ObjectNotFoundException):
+    detail = "Номер не найден"
+
+
+class HotelNotFoundException(ObjectNotFoundException):
+    detail = "Отель не найден"
