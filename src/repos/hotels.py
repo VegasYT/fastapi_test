@@ -23,7 +23,7 @@ class HotelsRepository(BaseRepository):
         limit: int | None = None,
         offset: int | None = None,
     ):
-        if date_from > date_to:
+        if date_from >= date_to:
             raise IncorrectDateException
         
         print(date_from)

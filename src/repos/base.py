@@ -1,3 +1,4 @@
+import logging
 from fastapi import HTTPException
 from pydantic import BaseModel
 from sqlalchemy import Sequence, delete, func, insert, select, update
@@ -68,11 +69,19 @@ class BaseRepository:
 
         try:
             result = await self.session.execute(add_stmt)
-        except IntegrityError as e:
-            if "UniqueViolationError" in str(e.orig):
+        except IntegrityError as ex:
+            logging.exception(
+                f"Не удалось добавить данные в БД, входные данные={add_data}"
+            )
+            if "UniqueViolationError" in str(ex.orig):
                 raise UniqueViolationException
-            elif "ForeignKeyViolationError" in str(e.orig):
+            elif "ForeignKeyViolationError" in str(ex.orig):
                 raise ObjectNotFoundException
+            else:
+                logging.exception(
+                    f"Незнакомая ошибка: не удалось добавить данные в БД, входные данные={add_data}"
+                )
+                raise ex
 
         obj = result.scalar_one()
         return obj

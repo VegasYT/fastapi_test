@@ -1,16 +1,14 @@
 # ruff: noqa: E402
-from contextlib import asynccontextmanager
-
-from fastapi import FastAPI
-from unittest import mock
-
-mock.patch("fastapi_cache.decorator.cache", lambda *args, **kwargs: lambda f: f).start()
+import sys
 import uvicorn
+import logging
+from pathlib import Path
+from unittest import mock
+from fastapi import FastAPI
+from contextlib import asynccontextmanager
+mock.patch("fastapi_cache.decorator.cache", lambda *args, **kwargs: lambda f: f).start()
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
-
-import sys
-from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
 from src.init import redis_manager
@@ -23,11 +21,15 @@ from src.api.images import router as router_images
 from src.database import *  # noqa
 
 
+logging.basicConfig(level=logging.DEBUG)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # При старте приложения
     await redis_manager.connect()
     FastAPICache.init(RedisBackend(redis_manager.redis), prefix="fastapi-cache")
+    logging.info("FastAPI cache initialized")
     yield
     await redis_manager.close()
     # При выключении/перезагрузке приложения

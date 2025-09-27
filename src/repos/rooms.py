@@ -23,7 +23,7 @@ class RoomsRepository(BaseRepository):
         date_from: date | None = None,
         date_to: date | None = None,
     ):
-        if date_from > date_to:
+        if date_from >= date_to:
             raise IncorrectDateException
         
         rooms_ids_to_get = rooms_ids_for_booking(date_from, date_to, hotel_id)

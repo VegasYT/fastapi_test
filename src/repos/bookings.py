@@ -35,7 +35,7 @@ class BookingsRepository(BaseRepository):
         return [self.mapper.map_to_domain_entity(booking) for booking in res.scalars().all()]
 
     async def add_booking(self, booking_data: BookingAddInternal, hotel_id: int):
-        if booking_data.date_from > booking_data.date_to:
+        if booking_data.date_from >= booking_data.date_to:
             raise IncorrectDateException
     
         rooms_ids_to_get = rooms_ids_for_booking(
