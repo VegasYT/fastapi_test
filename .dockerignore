@@ -1,0 +1,5 @@
+course_venv/
+__pycache__/
+Dockerfile
+.ruff_cache/
+.pytest_cache/

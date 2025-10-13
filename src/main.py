@@ -21,7 +21,7 @@ from src.api.images import router as router_images
 from src.database import *  # noqa
 
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 
 @asynccontextmanager
@@ -46,4 +46,4 @@ app.include_router(router_images)
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", reload=True, port=8000)
+    uvicorn.run("main:app", reload=True, host="0.0.0.0", port=8000)
