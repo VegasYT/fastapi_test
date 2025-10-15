@@ -2,7 +2,7 @@ from datetime import date
 from fastapi import Query, Body, APIRouter, HTTPException
 
 from src.services.hotels import HotelService
-from src.exceptions import IncorrectDateException, ObjectNotFoundException
+from src.exceptions import IncorrectDateException, ObjectNotFoundException, UniqueViolationException
 from src.schemas.hotels import HotelAdd, HotelPATCH
 from src.api.dependencies import DBDep, PaginationDep
 
@@ -55,7 +55,10 @@ async def create_hotel(
         }
     ),
 ):
-    hotel = await HotelService(db).add_hotel(hotel_data)
+    try:
+        hotel = await HotelService(db).add_hotel(hotel_data)
+    except UniqueViolationException:
+        raise HTTPException(status_code=409, detail="Такой отель уже существует")
 
     return {"status": "OK", "data": hotel}
 
@@ -88,6 +91,10 @@ async def edit_hotel(
     description="<h1>Тут мы частично обновляем данные об отеле: можно отправить name, а можно title</h1>",
 )
 async def partially_edit_hotel(db: DBDep, hotel_id: int, hotel_data: HotelPATCH):
+    # Проверяем, что хотя бы одно поле указано
+    if not any(hotel_data.model_dump(exclude_unset=True).values()):
+        raise HTTPException(status_code=422, detail="Необходимо указать хотя бы одно поле для обновления")
+
     await HotelService(db).edit_hotel_partially(hotel_id, hotel_data, is_patch=True)
 
     await db.commit()

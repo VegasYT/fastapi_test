@@ -58,7 +58,7 @@ async def create_room(
     try:
         room = await RoomService(db).create_room(room_data)
     except ObjectNotFoundException:
-        raise HTTPException(status_code=404, detail="Отель не найден")
+        raise HTTPException(status_code=404, detail="Отель или facility не найдены")
 
     return {"status": "OK", "data": room}
 

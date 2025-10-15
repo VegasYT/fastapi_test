@@ -70,12 +70,15 @@ class BaseRepository:
         try:
             result = await self.session.execute(add_stmt)
         except IntegrityError as ex:
-            logging.exception(
-                f"Не удалось добавить данные в БД, входные данные={add_data}"
-            )
             if "UniqueViolationError" in str(ex.orig):
+                logging.warning(
+                    f"Попытка добавить дубликат: {add_data}"
+                )
                 raise UniqueViolationException
             elif "ForeignKeyViolationError" in str(ex.orig):
+                logging.warning(
+                    f"Ошибка внешнего ключа при добавлении данных: {add_data}"
+                )
                 raise ObjectNotFoundException
             else:
                 logging.exception(
@@ -96,7 +99,25 @@ class BaseRepository:
         ]
 
         add_data_stmt = insert(self.model).values(filtered_data)
-        await self.session.execute(add_data_stmt)
+
+        try:
+            await self.session.execute(add_data_stmt)
+        except IntegrityError as ex:
+            if "UniqueViolationError" in str(ex.orig):
+                logging.warning(
+                    f"Попытка добавить дубликаты при bulk операции: {data}"
+                )
+                raise UniqueViolationException
+            elif "ForeignKeyViolationError" in str(ex.orig):
+                logging.warning(
+                    f"Ошибка внешнего ключа при bulk операции: {data}"
+                )
+                raise ObjectNotFoundException
+            else:
+                logging.exception(
+                    f"Незнакомая ошибка при bulk операции: {data}"
+                )
+                raise ex
 
     async def edit(self, update_data: BaseModel, is_patch: bool = False, **filters_by) -> None:
         await self._validate_single_object(**filters_by)

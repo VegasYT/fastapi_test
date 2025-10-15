@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Request, Response
 
 from src.exceptions import UniqueViolationException
 from src.api.dependencies import DBDep, UserIdDep
@@ -35,8 +35,12 @@ async def get_me(db: DBDep, user_id: UserIdDep):
 
 
 @router.post("/logout")
-async def logout_user(db: DBDep, response: Response):
-    response.delete_cookie("access_token")
+async def logout_user(db: DBDep, response: Response, request: Request):
+    token = request.cookies.get("access_token")
 
-    await db.commit()
-    return {"status": "ok"}
+    if token:
+        response.delete_cookie("access_token")
+        await db.commit()
+        return {"status": "ok"}
+    else:
+        return {"Вы и так не авторизированы"}

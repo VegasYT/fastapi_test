@@ -1,9 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class HotelAdd(BaseModel):
-    title: str
-    location: str
+    title: str = Field(min_length=1, max_length=35, description="Название отеля")
+    location: str = Field(min_length=1, max_length=100, description="Местоположение отеля")
 
 
 class Hotel(HotelAdd):
@@ -11,5 +11,5 @@ class Hotel(HotelAdd):
 
 
 class HotelPATCH(BaseModel):
-    title: str | None = None
-    location: str | None = None
+    title: str | None = Field(None, min_length=1, max_length=35, description="Название отеля")
+    location: str | None = Field(None, min_length=1, max_length=100, description="Местоположение отеля")

@@ -1,6 +1,7 @@
-from fastapi import Body, APIRouter
+from fastapi import Body, APIRouter, HTTPException
 from fastapi_cache.decorator import cache
 
+from src.exceptions import UniqueViolationException
 from src.services.facilities import FacilityService
 from src.schemas.facilities import FacilityAdd
 from src.api.dependencies import DBDep, PaginationDep
@@ -45,6 +46,9 @@ async def create_facilities(
         }
     ),
 ):
-    facility = await FacilityService(db).create_facility(facility_data)
+    try:
+        facility = await FacilityService(db).create_facility(facility_data)
+    except UniqueViolationException:
+        raise HTTPException(status_code=409, detail="Такое удобство уже существует")
 
     return {"status": "OK", "data": facility}
